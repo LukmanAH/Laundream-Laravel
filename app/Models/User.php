@@ -39,4 +39,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Laundry::class);
     }
+
+    public function information(): HasMany
+    {
+        return $this->hasMany(information::class);
+    }
 }

@@ -12,14 +12,18 @@ class TransactionController extends Controller
 {
     public function update(Request $request, Laundry $laundry, Transaction $transaction)
     {
-        $transaction->update([
-            'amount' => $request->filled('amount') ? $request->amount : $transaction->amount,
-            'status' => $request->status,
-            'additional_information_laundry' => $request->filled('additional_information_laundry') ? $request->additional_information_laundry : $transaction->additional_information_laundry
-        ]);
+        if((auth()->user()->tokenCan('employeeDo')||auth()->user()->tokenCan('ownerDo'))&& $transaction->laundry_id == $laundry->id){
+            $transaction->update([
+                'amount' => $request->filled('amount') ? $request->amount : $transaction->amount,
+                'status' => $request->status,
+                'additional_information_laundry' => $request->filled('additional_information_laundry') ? $request->additional_information_laundry : $transaction->additional_information_laundry
+            ]);
 
-        $transaction->load(['user', 'laundry', 'catalog', 'parfume']);
+            $transaction->load(['user', 'laundry', 'catalog', 'parfume']);
 
-        return TransactionResource::make($transaction);
+            return TransactionResource::make($transaction);
+        }
+        return response()->json("Permintaan ditolak");
+        
     }
 }

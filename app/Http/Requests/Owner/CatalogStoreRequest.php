@@ -4,11 +4,11 @@ namespace App\Http\Requests\Owner;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CatalogStoreRequest extends FormRequest
+class  CatalogStoreRequest extends FormRequest
 {
     public function authorize()
     {
-        return auth()->user()->tokenCan('catalog.create');
+        return auth()->user()->tokenCan('ownerDo');
     }
 
     public function rules()

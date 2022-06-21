@@ -8,37 +8,57 @@ use App\Http\Resources\LaundryResource;
 use App\Models\Laundry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Validator;
 use Illuminate\Validation\ValidationException;
 
 class LaundryController extends Controller
 {
-    public function update(LaundryUpdateRequest $laundryUpdateRequest, Laundry $laundry)
+    public function update(Request $laundryUpdateRequest, Laundry $laundry)
     {
-        throw_if(
-            auth()->id() != $laundry->user_id,
-            ValidationException::withMessages(['laundry' => 'Tidak dapat mengubah laundry!'])
-        );
+        // throw_if(
+        //     auth()->id() != $laundry->user_id,
+        //     ValidationException::withMessages(['laundry' => 'Tidak dapat mengubah laundry!'])
+        // );
+        if( auth()->id() == $laundry->user_id && auth()->user()->tokenCan('ownerDo')){
 
-        $laundry->update([
-            'name'      => $laundryUpdateRequest->name,
-            'lat'       => $laundryUpdateRequest->lat,
-            'lng'       => $laundryUpdateRequest->lng,
-            'address'   => $laundryUpdateRequest->address,
-            'province'  => $laundryUpdateRequest->province,
-            'city'      => $laundryUpdateRequest->city,
-            'phone'     => $laundryUpdateRequest->phone,
-        ]);
+            $validator = Validator::make($laundryUpdateRequest->all(),[
 
-        if ($laundryUpdateRequest->hasFile('banner')) {
-            $path = $laundryUpdateRequest->file('banner')->store('image', 's3');
+                'name'      => 'required',
+                'banner'    => 'mimes:jpeg,jpg,png|max:5000|nullable',
+                'lat'       => ['required', 'regex:/^(\+|-)?(?:90(?:(?:\.0{1,7})?)|(?:[0-9]|[1-8][0-9])(?:(?:\.[0-9]{1,7})?))$/'],
+                'lng'       => ['required', 'regex:/^(\+|-)?(?:180(?:(?:\.0{1,7})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,7})?))$/'],    
+                'address'   => 'required',
+                'province'  => 'required',
+                'city'      => 'required',
+                'phone'     => 'required',
+            ]);
+
+            if($validator->fails()){
+                return response()->json($validator->errors());
+            }
 
             $laundry->update([
-                'banner' => $path
+                'name'      => $laundryUpdateRequest->name,
+                'lat'       => $laundryUpdateRequest->lat,
+                'lng'       => $laundryUpdateRequest->lng,
+                'address'   => $laundryUpdateRequest->address,
+                'province'  => $laundryUpdateRequest->province,
+                'city'      => $laundryUpdateRequest->city,
+                'phone'     => $laundryUpdateRequest->phone,
             ]);
+
+            if ($laundryUpdateRequest->hasFile('banner')) {
+                $path = $laundryUpdateRequest->file('banner')->store('image', 's3');
+
+                $laundry->update([
+                    'banner' => $path
+                ]);
+            }
+
+            // return $laundry;
+
+            return LaundryResource::make($laundry);
+             }
+        return response()->json("Permintaan ditolak");
         }
-
-        return $laundry;
-
-        return LaundryResource::make($laundry);
-    }
 }

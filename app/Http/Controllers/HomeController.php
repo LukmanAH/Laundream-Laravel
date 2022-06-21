@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Laundry;
 
 use Illuminate\Http\Request;
 

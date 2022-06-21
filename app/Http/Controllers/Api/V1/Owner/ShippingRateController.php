@@ -7,48 +7,109 @@ use App\Http\Requests\Owner\ShippingRateStoreRequest;
 use App\Http\Resources\ShippingRateResource;
 use App\Models\Laundry;
 use App\Models\ShippingRate;
+use Illuminate\Http\Request;
+use Validator;
 use Illuminate\Validation\ValidationException;
 
 class ShippingRateController extends Controller
 {
     public function index(Laundry $laundry)
     {
-        throw_if(
-            !auth()->user()->tokenCan('shipping.show')
-                || auth()->id() != $laundry->user_id,
-            ValidationException::withMessages(['shipping_rate' => 'Tidak dapat melihat tarif ongkir!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('shipping.show')
+        //         || auth()->id() != $laundry->user_id,
+        //     ValidationException::withMessages(['shipping_rate' => 'Tidak dapat melihat tarif ongkir!'])
+        // );
 
-        $shippingRates = ShippingRate::query()
-            ->whereBelongsTo($laundry)
-            ->get();
+        if(auth()->user()->tokenCan('ownerDo') && auth()->id() == $laundry->user_id){
+            $shippingRates = ShippingRate::query()
+                ->whereBelongsTo($laundry)
+                ->get();
 
-        return ShippingRateResource::collection($shippingRates);
+            return ShippingRateResource::collection($shippingRates);
+        }
+        return response()->json("Permintaan ditolak");
     }
 
-    public function store(ShippingRateStoreRequest $shippingRateStoreRequest, Laundry $laundry)
+    public function store(Request $shippingRateStoreRequest, Laundry $laundry)
     {
-        throw_if(
-            !auth()->user()->tokenCan('shipping.create')
-                || auth()->id() != $laundry->user_id,
-            ValidationException::withMessages(['shipping_rate' => 'Tidak dapat membuat tarif ongkir!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('shipping.create')
+        //         || auth()->id() != $laundry->user_id,
+        //     ValidationException::withMessages(['shipping_rate' => 'Tidak dapat membuat tarif ongkir!'])
+        // );
 
-        $shippingRate = $laundry->shippingRates()
-            ->create($shippingRateStoreRequest->validated());
+        if(auth()->user()->tokenCan('ownerDo')&& auth()->id() == $laundry->user_id){
+            $validator = Validator::make($shippingRateStoreRequest->all(),[
+                'initial_km' => 'required',
+                'final_km' => 'required',
+                'price' => 'required',
+            ]);
 
-        return ShippingRateResource::make($shippingRate);
+            if($validator->fails()){
+                return response()->json($validator->errors());
+            }
+
+
+            $shippingRate = $laundry->shippingRates()->create( 
+                [
+                    'initial_km' => $shippingRateStoreRequest->initial_km,
+                    'final_km' =>  $shippingRateStoreRequest->final_km,
+                    'price' =>  $shippingRateStoreRequest->price,
+                ]
+            );
+
+
+
+            return ShippingRateResource::make($shippingRate);
+        }
+        return response()->json("Permintaan ditolak");
     }
+
+    public function update(Laundry $laundry, ShippingRate $shippingRate)
+    {
+        // throw_if(
+        //     auth()->id() != $laundry->user_id
+        //         || $laundry->id != $employee->laundry_id,
+        //     ValidationException::withMessages(['employee' => 'Tidak dapat mengubah karyawan!'])
+        // );
+
+        if(auth()->user()->tokenCan('ownerDo') && auth()->id() == $laundry->user_id && $laundry->id == $shippingRate->laundry_id){
+            $validator = Validator::make(request()->all(),[
+                'initial_km' => 'required',
+                'final_km' => 'required',
+                'price' => 'required',
+            ]);
+
+            if($validator->fails()){
+                return response()->json($validator->errors());
+            }
+
+            $shippingRate->update(request()->all());
+          
+
+            return ShippingRateResource::make($shippingRate);
+        }
+        return response()->json("Permintaan ditolak");
+    }
+
 
     public function destroy(Laundry $laundry, ShippingRate $shippingRate)
     {
-        throw_if(
-            !auth()->user()->tokenCan('shipping.delete')
-                || auth()->id() != $laundry->user_id
-                || $shippingRate->laundry_id != $laundry->id,
-            ValidationException::withMessages(['shipping_rate' => 'Tidak dapat menghapus tarif ongkir!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('shipping.delete')
+        //         || auth()->id() != $laundry->user_id
+        //         || $shippingRate->laundry_id != $laundry->id,
+        //     ValidationException::withMessages(['shipping_rate' => 'Tidak dapat menghapus tarif ongkir!'])
+        // );
 
-        $shippingRate->delete();
+        if(auth()->user()->tokenCan('ownerDo')
+        && auth()->id() == $laundry->user_id
+        && $shippingRate->laundry_id == $laundry->id){
+            $shippingRate->delete();
+            return response()->json("Berhasil menghapus tarif ongkir");
+        }
+        return response()->json("Permintaan ditolak");
+        
     }
 }

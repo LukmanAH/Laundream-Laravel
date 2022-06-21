@@ -1,26 +1,44 @@
 <?php
-
-use App\Http\Controllers\Api\V1\Customer\HomeController;
-use App\Http\Controllers\Api\V1\Customer\LaundryController as CustomerLaundryController;
-use App\Http\Controllers\Api\V1\LoginController;
-use App\Http\Controllers\Api\V1\Owner\{
-    CatalogController,
-    EmployeeController,
-    HomeController as OwnerHomeController,
-    LaundryController,
-    OperationalHourController,
-    ParfumeController,
-    ShippingRateController,
-    TransactionController
+use App\Http\Controllers\Api\V1\{
+    UserController, InformationController
 };
-use App\Http\Controllers\Api\V1\RegisterController;
+use App\Http\Controllers\Api\V1\Customer\{
+    HomeController, LaundryController as CustomerLaundryController
+};
+use App\Http\Controllers\Api\V1\Owner\{
+    CatalogController, EmployeeController, HomeController as OwnerHomeController, LaundryController,
+    OperationalHourController, ParfumeController, ShippingRateController, TransactionController
+};
+use App\Http\Controllers\Api\V1\Admin\{
+    AdminController, InformationController as AdminInformationController,
+    LaundryController as AdminLaundryController
+};
 use Illuminate\Support\Facades\Route;
 
-Route::post('v1/login',     [LoginController::class, 'login']);
-Route::post('v1/register',  [RegisterController::class, 'register']);
-Route::post('v1/logout',    [LoginController::class, 'logout']);
+Route::post('v1/login',     [UserController::class, 'login']);
+Route::post('v1/register',  [UserController::class, 'register']);
+Route::get('v1/info',       [InformationController::class, 'index']);
 
 Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'v1'], function () {
+    Route::group(['prefix' => 'admin'], function () {
+        //managing admin
+        Route::get('admin',         [AdminController::class, 'index']);
+        Route::post('admin',         [AdminController::class, 'store']);
+        Route::delete('{admin}',  [AdminController::class, 'destroy']);
+
+        //managing mitra (owner and laundry)
+        Route::get('mitra',         [AdminLaundryController::class, 'index']);
+        Route::post('mitra',         [AdminLaundryController::class, 'store']);
+        Route::put('mitra/{mitra}',  [AdminLaundryController::class, 'status']);
+        Route::delete('mitra/{mitra}',  [AdminLaundryController::class, 'destroy']);
+
+        //managing informations
+        Route::get('info',         [AdminInformationController::class, 'index']);
+        Route::post('info',         [AdminInformationController::class, 'store']);
+        Route::put('info/{information}',         [AdminInformationController::class, 'status']);
+        Route::delete('info/{information}',         [AdminInformationController::class, 'destroy']);
+    });
+
     Route::group(['prefix' => 'owner'], function () {
         // Managing Employees...
         Route::get('laundries/{laundry}/employees',                         [EmployeeController::class, 'index']);
@@ -43,6 +61,7 @@ Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'v1'], function () {
         // Managing Shipping Rate...
         Route::get('laundries/{laundry}/shipping',                         [ShippingRateController::class, 'index']);
         Route::post('laundries/{laundry}/shipping',                        [ShippingRateController::class, 'store']);
+        Route::put('laundries/{laundry}/shipping/{shippingRate}',       [ShippingRateController::class, 'update']);
         Route::delete('laundries/{laundry}/shipping/{shippingRate}',       [ShippingRateController::class, 'destroy']);
 
         // Update Profile Laundry
@@ -50,8 +69,9 @@ Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'v1'], function () {
 
         // Managing Operational Hour
         Route::get('laundries/{laundry}/operationalhour',        [OperationalHourController::class, 'index']);
+        Route::put('laundries/{laundry}/operationalhour/{operationalHour}',  [OperationalHourController::class, 'update']);
 
-        // Home Owner and Employee
+        // Home Owner 
         Route::get('laundries/{laundry}/home',      OwnerHomeController::class);
 
         // Update Status Transaction
@@ -63,4 +83,9 @@ Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'v1'], function () {
         Route::get('laundries/transaction',         [CustomerLaundryController::class, 'index']);
         Route::post('laundries/{laundry}/store',    [CustomerLaundryController::class, 'store']);
     });
+
+
+Route::put('profile',    [UserController::class, 'update']); 
+Route::post('logout',    [UserController::class, 'logout']);   
 });
+

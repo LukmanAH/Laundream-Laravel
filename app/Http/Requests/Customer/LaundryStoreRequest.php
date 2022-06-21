@@ -8,7 +8,7 @@ class LaundryStoreRequest extends FormRequest
 {
     public function authorize()
     {
-        return auth()->user()->tokenCan('make.reservation');
+        return auth()->user()->tokenCan('customerDo');
     }
 
     public function rules()

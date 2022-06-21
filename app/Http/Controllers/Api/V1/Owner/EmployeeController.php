@@ -10,74 +10,121 @@ use App\Http\Resources\UserResource;
 use App\Models\Employee;
 use App\Models\Laundry;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Validator;
 use Illuminate\Validation\ValidationException;
 
 class EmployeeController extends Controller
 {
     public function index(Laundry $laundry)
     {
-        throw_if(
-            auth()->id() != $laundry->user_id || !auth()->user()->tokenCan('employee.list'),
-            ValidationException::withMessages(['employee' => 'Tidak dapat melihat karyawan!'])
-        );
+        // throw_if(
+        //     auth()->id() != $laundry->user_id || !auth()->user()->tokenCan('employee.list'),
+        //     ValidationException::withMessages(['employee' => 'Tidak dapat melihat karyawan!'])
+        // );
 
-        $employee = Employee::query()
-            ->whereBelongsTo($laundry)
-            ->with('user')
-            ->get();
+        if(auth()->id() == $laundry->user_id && auth()->user()->tokenCan('ownerDo')){
 
-        return EmployeeResource::collection($employee);
+            $employee = Employee::query()
+                ->whereBelongsTo($laundry)
+                ->with('user')
+                ->get();
+
+            return EmployeeResource::collection($employee);
+        }
+        return response()->json("Permintaan ditolak");
     }
 
-    public function store(EmployeeStoreRequest $employeeStoreRequest, Laundry $laundry)
+    public function store(Request $employeeStoreRequest, Laundry $laundry)
     {
-        throw_if(
-            auth()->id() != $laundry->user_id,
-            ValidationException::withMessages(['employee' => 'Tidak dapat membuat karyawan!'])
-        );
+        if(auth()->id() == $laundry->user_id && auth()->user()->tokenCan('ownerDo')){
+            $validator = Validator::make($employeeStoreRequest->all(),[
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|unique:users',
+                'password' => 'required|string|min:8',
+                'no_hp' => 'required|min:11'
+            ]);
 
-        $employee = User::create(
-            [
-                'name'      => $employeeStoreRequest->name,
-                'email'     => $employeeStoreRequest->email,
-                'password'  => bcrypt($employeeStoreRequest->no_hp),
-                'role'      => User::ROLE_EMPLOYEE,
-                'no_hp'     => $employeeStoreRequest->no_hp
-            ]
-        );
+            if($validator->fails()){
+                return response()->json($validator->errors());
+            }
 
-        $laundry->employees()->create([
-            'user_id' => $employee->id,
-        ]);
+            $employee = User::create(
+                [
+                    'name'      => $employeeStoreRequest->name,
+                    'email'     => $employeeStoreRequest->email,
+                    'password'  => bcrypt($employeeStoreRequest->password),
+                    'role'      => User::ROLE_EMPLOYEE,
+                    'no_hp'     => $employeeStoreRequest->no_hp
+                ]
+            );
+    
+            $laundry->employees()->create([
+                'user_id' => $employee->id,
+            ]);
+    
+            return UserResource::make($employee);
+        }
 
-        return UserResource::make($employee);
+        return response()->json("Permintaan ditolak");
+       
     }
 
-    public function update(EmployeeUpdateRequest $employeeUpdateRequest, Laundry $laundry, Employee $employee)
+    // public function update(EmployeeUpdateRequest $employeeUpdateRequest, Laundry $laundry, Employee $employee)
+    // {
+    //     // throw_if(
+    //     //     auth()->id() != $laundry->user_id
+    //     //         || $laundry->id != $employee->laundry_id,
+    //     //     ValidationException::withMessages(['employee' => 'Tidak dapat mengubah karyawan!'])
+    //     // );
+
+    //     if(auth()->user()->tokenCan('ownerDo') && auth()->id() == $laundry->user_id && $laundry->id != $employee->laundry_id){
+    //         User::where('id', $employee->user_id)
+    //             ->update($employeeUpdateRequest->validated());
+
+    //         $employee->load('user');
+
+    //         return EmployeeResource::make($employee);
+    //     }
+    //     return response()->json("Permintaan ditolak");
+    // }
+
+    public function update(Laundry $laundry, Employee $employee)
     {
-        throw_if(
-            auth()->id() != $laundry->user_id
-                || $laundry->id != $employee->laundry_id,
-            ValidationException::withMessages(['employee' => 'Tidak dapat mengubah karyawan!'])
-        );
+        // throw_if(
+        //     auth()->id() != $laundry->user_id
+        //         || $laundry->id != $employee->laundry_id,
+        //     ValidationException::withMessages(['employee' => 'Tidak dapat mengubah karyawan!'])
+        // );
 
-        User::where('id', $employee->user_id)
-            ->update($employeeUpdateRequest->validated());
+        if(auth()->user()->tokenCan('ownerDo') && auth()->id() == $laundry->user_id && $laundry->id == $employee->laundry_id){
 
-        $employee->load('user');
+            $employee->update(['status' => request('status')]);
+            User::where('id', $employee->user_id)->update(['name'=> request('name'), 'email'=> request('email'), 'no_hp'=> request('no_hp') ]);
 
-        return EmployeeResource::make($employee);
+            $employee->load('user');
+
+            return EmployeeResource::make($employee);
+        }
+        return response()->json("Permintaan ditolak");
     }
 
     public function destroy(Laundry $laundry, Employee $employee)
     {
-        throw_if(
-            !auth()->user()->tokenCan('employee.delete')
-                || auth()->id() != $laundry->user_id
-                || $laundry->id != $employee->laundry_id,
-            ValidationException::withMessages(['employee' => 'Tidak dapat menghapus karyawan!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('employee.delete')
+        //         || auth()->id() != $laundry->user_id
+        //         || $laundry->id != $employee->laundry_id,
+        //     ValidationException::withMessages(['employee' => 'Tidak dapat menghapus karyawan!'])
+        // );
 
-        User::find($employee->user_id)->delete();
+        if(auth()->user()->tokenCan('ownerDo') && auth()->id() == $laundry->user_id && $laundry->id == $employee->laundry_id){
+            User::find($employee->user_id)->delete();
+
+            
+            return response()->json("Berhasil Menghapus Karyawan");
+        }
+        return response()->json("Permintaan ditolak");
+        
     }
 }

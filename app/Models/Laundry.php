@@ -13,6 +13,7 @@ class Laundry extends Model
 {
     use HasFactory;
 
+    const STATUS_UNVALIDATE = 2;
     const STATUS_ACTIVE = 1;
     const STATUS_INACTIVE = 0;
 
@@ -28,6 +29,7 @@ class Laundry extends Model
         'lng',
         'status'
     ];
+
 
     public function user(): BelongsTo
     {
@@ -54,6 +56,11 @@ class Laundry extends Model
         return $this->hasMany(Employee::class);
     }
 
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     public function shippingRates(): HasMany
     {
         return $this->hasMany(ShippingRate::class);
@@ -62,9 +69,9 @@ class Laundry extends Model
     public function scopeNearestTo(Builder $builder, $lat, $lng)
     {
         return $builder
-            ->select('*', DB::raw("6371 * acos(cos(radians({$lat}))
-            * cos(radians(lat)) * cos(radians(lng) - radians({$lng}))
-            + sin(radians( {$lat})) * sin(radians(lat))) AS distance"))
+            ->select('*', DB::raw("6371 * acos(cos(radians(lat))
+            * cos(radians(lat)) * cos(radians(lng) - radians(lng))
+            + sin(radians(lat)) * sin(radians(lat))) AS distance"))
             ->orderByRaw('distance');
     }
 }

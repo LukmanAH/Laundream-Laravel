@@ -12,59 +12,80 @@ class ParfumeController extends Controller
 {
     public function index(Laundry $laundry)
     {
-        throw_if(
-            !auth()->user()->tokenCan('parfume.show')
-                || auth()->id() != $laundry->user_id,
-            ValidationException::withMessages(['parfume' => 'Tidak dapat melihat parfum!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('parfume.show')
+        //         || auth()->id() != $laundry->user_id,
+        //     ValidationException::withMessages(['parfume' => 'Tidak dapat melihat parfum!'])
+        // );
 
-        $parfumes = Parfume::query()
-            ->whereBelongsTo($laundry)
-            ->get();
+        if(auth()->user()->tokenCan('ownerDo')
+              && auth()->id() == $laundry->user_id){
 
-        return ParfumeResource::collection($parfumes);
-    }
+            $parfumes = Parfume::query()
+                ->whereBelongsTo($laundry)
+                ->get();
+
+            return ParfumeResource::collection($parfumes);
+        }
+        return response()->json("Permintaan ditolak");
+        }
 
     public function store(Laundry $laundry)
     {
-        throw_if(
-            !auth()->user()->tokenCan('parfume.create')
-                || auth()->id() != $laundry->user_id
-                || is_null(request('name')),
-            ValidationException::withMessages(['parfume' => 'Tidak dapat membuat parfum!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('parfume.create')
+        //         || auth()->id() != $laundry->user_id
+        //         || is_null(request('name')),
+        //     ValidationException::withMessages(['parfume' => 'Tidak dapat membuat parfum!'])
+        // );
 
-        $parfume = $laundry->parfumes()->create(
-            ['name' => request('name')]
-        );
+        if( auth()->user()->tokenCan('ownerDo')
+                 && auth()->id() == $laundry->user_id
+                 && !is_null(request('name'))){
 
-        return ParfumeResource::make($parfume);
+            $parfume = $laundry->parfumes()->create(
+                ['name' => request('name')]
+            );
+
+            return ParfumeResource::make($parfume);
+        }
+        return response()->json("Permintaan ditolak");
     }
 
     public function update(Laundry $laundry, Parfume $parfume)
     {
-        throw_if(
-            !auth()->user()->tokenCan('parfume.update')
-                || auth()->id() != $laundry->user_id
-                || $parfume->laundry_id != $laundry->id
-                || is_null(request('name')),
-            ValidationException::withMessages(['parfume' => 'Tidak dapat mengubah parfum!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('parfume.update')
+        //         || auth()->id() != $laundry->user_id
+        //         || $parfume->laundry_id != $laundry->id
+        //         || is_null(request('name')),
+        //     ValidationException::withMessages(['parfume' => 'Tidak dapat mengubah parfum!'])
+        // );
 
-        $parfume->update(['name' => request('name')]);
+        if(auth()->user()->tokenCan('ownerDo') && auth()->id() == $laundry->user_id && $parfume->laundry_id == $laundry->id && !is_null(request('name'))){
+            $parfume->update(['name' => request('name')]);
 
-        return ParfumeResource::make($parfume);
+            return ParfumeResource::make($parfume);
+        }
+        return response()->json("Permintaan ditolak");
     }
 
     public function destroy(Laundry $laundry, Parfume $parfume)
     {
-        throw_if(
-            !auth()->user()->tokenCan('parfume.delete')
-                || auth()->id() != $laundry->user_id
-                || $parfume->laundry_id != $laundry->id,
-            ValidationException::withMessages(['parfume' => 'Tidak dapat menghapus parfum!'])
-        );
+        // throw_if(
+        //     !auth()->user()->tokenCan('parfume.delete')
+        //         || auth()->id() != $laundry->user_id
+        //         || $parfume->laundry_id != $laundry->id,
+        //     ValidationException::withMessages(['parfume' => 'Tidak dapat menghapus parfum!'])
+        // );
 
-        $parfume->delete();
+        if(auth()->user()->tokenCan('ownerDo')
+                && auth()->id() == $laundry->user_id
+                && $parfume->laundry_id == $laundry->id){
+
+            $parfume->delete();
+            return response()->json("Berhasil Menghapus Parfume");
+        }
+        return response()->json("Permintaan ditolak");
     }
 }

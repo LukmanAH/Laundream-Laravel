@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+
 use App\Http\Controllers\Admin\LaundryController;
+
+use App\Http\Controllers\Admin\InformationController;
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -17,21 +21,48 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::redirect('/', '/login');
+Route::redirect('/admin', '/login');
+
+Route::get('/', function () {
+    return view("layouts/landingpage");
+});
 
 Route::get('test', function () {
     $now = now()->addDays(6)->locale('id')->dayName;
-    dd($now);
+
+    return $now;
 });
 
 Route::get('login',     [LoginController::class, 'showLoginForm']);
 Route::post('login',    [LoginController::class, 'login'])->name('login');
 
-Route::group(['middleware' => 'auth', 'prefix' => 'admin', 'as' => 'admin.'], function () {
+
+Route::group(['middleware' => ['auth', 'admin.web'], 'prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('/dashboard',     DashboardController::class)->name('dashboard');
 
+    // Route::get('laundries/new',   [LaundryController::class, 'new'])->name('laundries.new');
+
+    
+    // Route::get('/admin',   [AdminController::class, 'index'])->name('admin.index');
+
+    Route::resource('admin',                AdminController::class)->except(['show']);
+
+    Route::post('admin/{admin}/detail',   [AdminController::class, 'detail'])->name('admin.detail');
+
+
+    Route::resource('informations',                InformationController::class)->except(['show']);
+
+    Route::post('informations/{information}/status',   [InformationController::class, 'status'])->name('informations.status');
+
+
+
     Route::post('laundries/{laundry}/status',   [LaundryController::class, 'status'])->name('laundries.status');
-    Route::resource('laundries',                LaundryController::class);
+
+    Route::resource('laundries',                LaundryController::class)->except(['show']);
+
+    Route::post('laundries/{laundry}/detail',   [LaundryController::class, 'detail'])->name('laundries.detail');
+
+
 
     Route::post('logout',   [LoginController::class, 'logout'])->name('logout');
 });
