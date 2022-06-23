@@ -47,7 +47,7 @@ Route::group(['middleware' => ['auth', 'admin.web'], 'prefix' => 'admin', 'as' =
 
     Route::resource('admin',                AdminController::class)->except(['show']);
 
-    Route::post('admin/{admin}/detail',   [AdminController::class, 'detail'])->name('admin.detail');
+    //Route::post('admin/{admin}/detail',   [AdminController::class, 'detail'])->name('admin.detail');
 
 
     Route::resource('informations',                InformationController::class)->except(['show']);

@@ -1,50 +1,61 @@
 @extends('layouts.admin')
 
 @section('title')
-    Tambah Informasi
+Tambah Informasi
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <!-- Small boxes (Stat box) -->
-        <div class="row">
-            <div class="col">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Tambah Informasi</h6>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('admin.informations.store') }}" method="POST">
-                            @csrf
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="title" class="required">Title</label>
-                                        <input type="text" class="form-control @error('title') is-invalid @enderror"
-                                            id="title" placeholder="Masukkan title" name="title" required autofocus>
-                                        @error('title')
-                                            <div class="alert alert-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+<div class="container-fluid">
+    <!-- Small boxes (Stat box) -->
+    <div class="row">
+        <div class="col">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Tambah Informasi</h6>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('admin.informations.store') }}" method="POST">
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="title" class="required">Title</label>
+                                    <input type="text" class="form-control @error('title') is-invalid @enderror"
+                                        id="title" placeholder="Masukkan title" name="title" required autofocus>
+                                    @error('title')
+                                        <div class="alert alert-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="description" class="required">Deskripsi</label>
-                                        <input type="text" class="form-control @error('description') is-invalid @enderror"
-                                            id="description" placeholder="Masukkan deskripsi" name="description" required autofocus>
-                                        @error('description')
-                                            <div class="alert alert-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-9">
+                                <div class="form-group">
+                                    <label for="description" class="required">Deskripsi</label>
+                                    <textarea rows=6 class="form-control @error('description') is-invalid @enderror"
+                                        id="description" placeholder="Masukkan deskripsi" name="description" required
+                                        autofocus> </textarea>
+                                    @error('description')
+                                        <div class="alert alert-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
-                            <button class="btn btn-primary" type="submit">Submit</button>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="column">
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <input type="button" value="Choose File" onclick="document.getElementById('pic').click()"class="btn-file">
+                                    <input type="text" id="filename" value="No File Choosen">
+                                    <input type="file" id="pic" name="picture" style="display:none"onchange="document.getElementById('filename').value=this.value">            
+                                </div>
+                            </div>
+                        </div>
+                       
+                        <button class="btn btn-primary" type="submit">Submit</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection

@@ -61,7 +61,19 @@ class InformationController extends Controller
     public function status(Request $request, Informations $information)
     {
         if(auth()->user()->tokenCan('adminDo')){
-          $information->update(['status' => $request->status]);
+            $validator = Validator::make($request->all(),[
+                'title' => 'required|string|max:255',
+                'description' => 'required|string|',
+                'status' => 'required',
+                'picture' => 'mimes:jpeg,jpg,png|max:5000|nullable',
+            ]);
+
+            if($validator->fails()){
+                return response()->json($validator->errors());
+            }
+
+            $information->update(['status' => $request->status, 'title'=> $request->title, 'description' =>$request->description]);
+
 
           return response()->json($information);;
           }

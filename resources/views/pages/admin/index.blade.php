@@ -37,7 +37,7 @@ Admin
                                             <td>{{ $adm->no_hp }}</td>
                                             <td>{{ $adm->email }}</td>
                                             <td>
-                                                <form
+                                                {{-- <form
                                                     action="{{ route('admin.admin.detail', $adm) }}"
                                                     method="POST" class="d-inline-block">
                                                     @csrf
@@ -45,7 +45,7 @@ Admin
                                                         class="btn btn-xs btn-info">
                                                         Detail
                                                     </button>
-                                                </form>
+                                                </form> --}}
 
                                                 <form action="{{ route('admin.admin.destroy', $adm) }}"
                                                 method="POST" class="d-inline-block">
