@@ -8,7 +8,7 @@ use App\Http\Resources\LaundryResource;
 use App\Models\Laundry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class LaundryController extends Controller
@@ -19,21 +19,21 @@ class LaundryController extends Controller
         //     auth()->id() != $laundry->user_id,
         //     ValidationException::withMessages(['laundry' => 'Tidak dapat mengubah laundry!'])
         // );
-        if( auth()->id() == $laundry->user_id && auth()->user()->tokenCan('ownerDo')){
+        if (auth()->id() == $laundry->user_id && auth()->user()->tokenCan('ownerDo')) {
 
-            $validator = Validator::make($laundryUpdateRequest->all(),[
+            $validator = Validator::make($laundryUpdateRequest->all(), [
 
                 'name'      => 'required',
                 'banner'    => 'mimes:jpeg,jpg,png|max:5000|nullable',
                 'lat'       => ['required', 'regex:/^(\+|-)?(?:90(?:(?:\.0{1,7})?)|(?:[0-9]|[1-8][0-9])(?:(?:\.[0-9]{1,7})?))$/'],
-                'lng'       => ['required', 'regex:/^(\+|-)?(?:180(?:(?:\.0{1,7})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,7})?))$/'],    
+                'lng'       => ['required', 'regex:/^(\+|-)?(?:180(?:(?:\.0{1,7})?)|(?:[0-9]|[1-9][0-9]|1[0-7][0-9])(?:(?:\.[0-9]{1,7})?))$/'],
                 'address'   => 'required',
                 'province'  => 'required',
                 'city'      => 'required',
                 'phone'     => 'required',
             ]);
 
-            if($validator->fails()){
+            if ($validator->fails()) {
                 return response()->json($validator->errors());
             }
 
@@ -48,17 +48,24 @@ class LaundryController extends Controller
             ]);
 
             if ($laundryUpdateRequest->hasFile('banner')) {
-                $path = $laundryUpdateRequest->file('banner')->store('image', 's3');
+                $file = $laundryUpdateRequest->file('banner')->getClientOriginalName();
+
+                $path = $laundryUpdateRequest->file('banner')
+                    ->storeAs(
+                        'laundream/banner',
+                        now()->timestamp . $file,
+                        's3'
+                    );
 
                 $laundry->update([
-                    'banner' => $path
+                    'banner' => config('filesystems.path') . $path
                 ]);
             }
 
             // return $laundry;
 
             return LaundryResource::make($laundry);
-             }
-        return response()->json("Permintaan ditolak");
         }
+        return response()->json("Permintaan ditolak");
+    }
 }

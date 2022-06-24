@@ -71,4 +71,5 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 
+    'path' => env('PATH_S3')
 ];
