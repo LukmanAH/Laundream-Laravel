@@ -1,16 +1,26 @@
 <?php
+
 use App\Http\Controllers\Api\V1\{
-    UserController, InformationController
+    UserController,
+    InformationController
 };
 use App\Http\Controllers\Api\V1\Customer\{
-    HomeController, LaundryController as CustomerLaundryController
+    HomeController,
+    LaundryController as CustomerLaundryController
 };
 use App\Http\Controllers\Api\V1\Owner\{
-    CatalogController, EmployeeController, HomeController as OwnerHomeController, LaundryController,
-    OperationalHourController, ParfumeController, ShippingRateController, TransactionController
+    CatalogController,
+    EmployeeController,
+    HomeController as OwnerHomeController,
+    LaundryController,
+    OperationalHourController,
+    ParfumeController,
+    ShippingRateController,
+    TransactionController
 };
 use App\Http\Controllers\Api\V1\Admin\{
-    AdminController, InformationController as AdminInformationController,
+    AdminController,
+    InformationController as AdminInformationController,
     LaundryController as AdminLaundryController
 };
 use Illuminate\Support\Facades\Route;
@@ -20,6 +30,12 @@ Route::post('v1/register',  [UserController::class, 'register']);
 Route::get('v1/info',       [InformationController::class, 'index']);
 
 Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'v1'], function () {
+    Route::get('information', [InformationController::class, 'index']);
+    Route::put('information/status/{information}', [InformationController::class, 'status']);
+    Route::post('information/{information}', [InformationController::class, 'store']);
+    Route::put('information/{information}', [InformationController::class, 'update']);
+    Route::delete('information/{information}', [InformationController::class, 'destroy']);
+
     Route::group(['prefix' => 'admin'], function () {
         //managing admin
         Route::get('admin',         [AdminController::class, 'index']);
@@ -85,7 +101,6 @@ Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'v1'], function () {
     });
 
 
-Route::put('profile',    [UserController::class, 'update']); 
-Route::post('logout',    [UserController::class, 'logout']);   
+    Route::put('profile',    [UserController::class, 'update']);
+    Route::post('logout',    [UserController::class, 'logout']);
 });
-

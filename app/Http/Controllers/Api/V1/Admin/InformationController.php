@@ -3,20 +3,18 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\InformationStoreRequest;
-use App\Http\Resources\InformationResource;
 use App\Http\Resources\InformationResourceAdmin;
-use App\Models\Informations;
-use Validator;
+use App\Models\Information;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class InformationController extends Controller
 {
     public function index()
     {
-        if(auth()->user()->tokenCan('adminDo')){
-            $info = Informations::with('user')
-            ->get();
+        if (auth()->user()->tokenCan('adminDo')) {
+            $info = Information::with('user')
+                ->get();
 
             return InformationResourceAdmin::collection($info);
         }
@@ -25,23 +23,23 @@ class InformationController extends Controller
 
     public function store(Request $informationStoreRequest)
     {
-        if(auth()->user()->tokenCan('adminDo')){
-            $validator = Validator::make($informationStoreRequest->all(),[
+        if (auth()->user()->tokenCan('adminDo')) {
+            $validator = Validator::make($informationStoreRequest->all(), [
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|',
                 'picture' => 'mimes:jpeg,jpg,png|max:5000|nullable',
             ]);
 
-            if($validator->fails()){
+            if ($validator->fails()) {
                 return response()->json($validator->errors());
             }
 
 
-            $info = Informations::create([
+            $info = Information::create([
                 'title' => $informationStoreRequest->title,
                 'description' => $informationStoreRequest->description,
                 'user_id' =>  auth()->id(),
-                'status' => Informations::STATUS_ACTIVE
+                'status' => Information::STATUS_ACTIVE
             ]);
 
             if ($informationStoreRequest->hasFile('picture')) {
@@ -57,36 +55,35 @@ class InformationController extends Controller
         return response()->json("Permintaan ditolak");
     }
 
-    
-    public function status(Request $request, Informations $information)
+
+    public function status(Request $request, Information $information)
     {
-        if(auth()->user()->tokenCan('adminDo')){
-            $validator = Validator::make($request->all(),[
+        if (auth()->user()->tokenCan('adminDo')) {
+            $validator = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'description' => 'required|string|',
                 'status' => 'required',
-                'picture' => 'mimes:jpeg,jpg,png|max:5000|nullable',
+                'picture' => 'nullable|sometimes|mimes:jpeg,jpg,png|max:5000',
             ]);
 
-            if($validator->fails()){
+            if ($validator->fails()) {
                 return response()->json($validator->errors());
             }
 
-            $information->update(['status' => $request->status, 'title'=> $request->title, 'description' =>$request->description]);
+            $information->update(['status' => $request->status, 'title' => $request->title, 'description' => $request->description]);
 
 
-          return response()->json($information);;
-          }
-        return response()->json("Permintaan ditolak");
-    }
-
-    public function destroy(Informations $information)
-    {
-        if(auth()->user()->tokenCan('adminDo')){
-            Informations::find($information->id)->delete();
-            return response()->json("Berhasil Dihapus");
+            return response()->json($information);;
         }
         return response()->json("Permintaan ditolak");
     }
 
+    public function destroy(Information $information)
+    {
+        if (auth()->user()->tokenCan('adminDo')) {
+            Information::find($information->id)->delete();
+            return response()->json("Berhasil Dihapus");
+        }
+        return response()->json("Permintaan ditolak");
+    }
 }
